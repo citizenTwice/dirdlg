@@ -1,7 +1,7 @@
+![screenshot](.img/screenshot.png)
 
 # DIRDLG
 Self-contained custom directory selection dialog C++ class for Win32 applications.
-![screenshot](.img/screenshot.png)
 
 ### Why
 I'm not happy with SHBrowseForFolder and the stock file dialogs, as I don't like click/expand trees or and the fact that the inital directory 
