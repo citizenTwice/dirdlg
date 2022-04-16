@@ -147,8 +147,8 @@ static struct _dir_dlg_template {
     WORD      weight{ 400 };
     BYTE      italic{ 0 };
     BYTE      charset{ 0 };
-    // WCHAR     face[13]{ L"MS Shell Dlg" };
-    WCHAR     face[9]{ L"Segoe UI" };
+    WCHAR     face[13]{ L"MS Shell Dlg" };
+    // WCHAR     face[9]{ L"Segoe UI" };
     struct {
       DWORD     helpID{ 11 };
       DWORD     exStyle{ 0 };
