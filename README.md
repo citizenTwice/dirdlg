@@ -11,7 +11,7 @@ parameter sometimes gets ignored.
 Not much to report, but:
 - Header-only library with no resource/.rc files dependency
 - Path autocompletion
-- Fast keyboard naviagtion with, including these shortcuts:
+- Fast keyboard naviagtion, including these shortcuts:
    - \                 = go to root dir
    - &lt;backspace&gt; = go to parent dir
    - F1                = volume select
