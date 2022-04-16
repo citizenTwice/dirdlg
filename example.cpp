@@ -1,12 +1,11 @@
-#define UNICODE
-#define _UNICODE
+//#define UNICODE
+//#define _UNICODE
 
 #include "dirdlg.h"
 #include <stdio.h>
 #include <windows.h>
 
 int main() {
-  DIRDLG dd{_T("DIR SELECTION")};
   auto s = DIRDLG{}.get_dir(_T("."));
   if (s) {
 #if defined(UNICODE)
