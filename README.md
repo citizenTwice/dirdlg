@@ -4,7 +4,7 @@
 Self-contained custom directory-selection dialog C++ class for Win32 applications.
 
 ### Why
-I'm not happy with SHBrowseForFolder and the stock file dialogs, as I don't like click/expand trees or and the fact that the inital directory 
+I'm not happy with SHBrowseForFolder and the stock file dialogs, as I don't like click/expand trees as well as the fact that the inital directory 
 parameter sometimes gets ignored.
 
 ## Features
