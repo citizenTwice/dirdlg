@@ -1,5 +1,5 @@
-// #define UNICODE
-// #define _UNICODE
+#define UNICODE
+#define _UNICODE
 
 #include "dirdlg.h"
 #include <stdio.h>

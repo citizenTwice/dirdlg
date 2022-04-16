@@ -28,9 +28,6 @@ SOFTWARE.
 
 #pragma once
 
-//#define UNICODE
-//#define _UNICODE
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -47,6 +44,7 @@ SOFTWARE.
 #pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "pathcch.lib")
 
+//TODO: prevent macro name collsion
 #if !defined(UNICODE)
 #define str    std::string
 #define to_str std::to_string
@@ -423,7 +421,13 @@ struct DIRDLG {
     if (dn >= 0) {
       TCHAR drv[8]{ _T('A'),_T(':'),_T('\\'),0 };
       drv[0] += dn;
-      // SendMessage(GetDlgItem(hdlg, 1003), CB_SETCURSEL, WPARAM(dn), 0);
+      auto cnt = 0;
+      for (const auto& d : get_drive_letters()) {
+        if (d == drv) {
+          SendMessage(GetDlgItem(hdlg, 1003), CB_SETCURSEL, WPARAM(cnt), 0);
+        }
+        cnt++;
+      }      
     }
     return true;
   }
