@@ -44,22 +44,6 @@ SOFTWARE.
 #pragma comment(lib, "shlwapi.lib")
 #pragma comment(lib, "pathcch.lib")
 
-//TODO: prevent macro name collsion
-#if !defined(UNICODE)
-#define str    std::string
-#define to_str std::to_string
-#else 
-#define str    std::wstring
-#define to_str std::to_wstring
-#define printf wprintf
-#define _strdup _wcsdup
-#define strlen wcslen
-#define strcmp wcscmp
-#endif
-
-#define tsizeof(x) (sizeof(x) / sizeof(_TCHAR))
-
-
 //#pragma pack(show)
 #pragma pack(push, 4)  
 static struct _new_dir_prompt_template {
@@ -135,7 +119,7 @@ static struct _dir_dlg_template {
     DWORD     helpID{ 1 };
     DWORD     exStyle{ WS_EX_CONTROLPARENT };
     DWORD     style{ DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU };
-    WORD      cDlgItems{ 9 };
+    WORD      cDlgItems{ 10 };
     short     x{ 0 };
     short     y{ 0 };
     short     cx{ 257 };
@@ -162,6 +146,19 @@ static struct _dir_dlg_template {
       WCHAR     title[5]{ L"TEST" };
       WORD      extraCount{ 0x000 };
     } t1;
+    struct {
+      DWORD     helpID{ 11 };
+      DWORD     exStyle{ 0 };
+      DWORD     style{ SS_LEFT | WS_GROUP | WS_CHILD | WS_VISIBLE };
+      short     x{ 1 };
+      short     y{ 17 };
+      short     cx{ 8 };
+      short     cy{ 8 };
+      DWORD     id{ 1009 };
+      WORD      windowClass[2]{ 0xFFFF, 0x082 };
+      WCHAR     title[3]{ L"&." };
+      WORD      extraCount{ 0x000 };
+    } t4;
     struct {
       DWORD     helpID{ 11 };
       DWORD     exStyle{ LBS_WANTKEYBOARDINPUT };
@@ -273,6 +270,25 @@ static struct _dir_dlg_template {
 #pragma pack(pop)
 
 struct DIRDLG {
+
+#if !defined(UNICODE)
+  using str = std::string;
+#define __TO_STR std::to_string
+#define __PRINTF printf
+#define __STRDUP _strdup
+#define __STRLEN strlen
+#define __STRCMP strcmp
+#else 
+  using str = std::wstring;
+#define __TO_STR std::to_wstring
+#define __PRINTF wprintf
+#define __STRDUP _wcsdup
+#define __STRLEN wcslen
+#define __STRCMP wcscmp
+#endif
+
+#define TSIZEOF(x) (sizeof(x) / sizeof(_TCHAR))
+
   static const  int    RET_SELECTED = 1;
   static const  int    RET_CANCEL = 2;
   static const  int    RET_ERROR = -1;
@@ -294,7 +310,7 @@ struct DIRDLG {
     str tostr() {
       str retval{ _T("{ ") };
       if (error) {
-        retval += _T("ERROR : CODE(") + to_str(error_code) + _T(")");
+        retval += _T("ERROR : CODE(") + __TO_STR(error_code) + _T(")");
       } else {
         retval += _T("\n");
         retval += _T(" NAME:   ") + name + _T("\n");
@@ -344,7 +360,7 @@ struct DIRDLG {
       return 0;
     } else if (umsg == WM_COMMAND) {
       if (wparm == IDOK) {
-        GetDlgItemText(hdlg, 1004, _this->new_dir, tsizeof(DIRDLG::new_dir) - 1);        
+        GetDlgItemText(hdlg, 1004, _this->new_dir, TSIZEOF(DIRDLG::new_dir) - 1);        
         EndDialog(hdlg, 1);
         return 1;
       } else if (wparm == IDCANCEL) {
@@ -367,14 +383,14 @@ struct DIRDLG {
     }
     {
       // get basename
-      auto tmp = _strdup(path);
+      auto tmp = __STRDUP(path);
       PathStripPath(tmp);
       retval.name = tmp;
       free(tmp);
     }
     {
       // get parent path
-      auto tmp = _strdup(path);
+      auto tmp = __STRDUP(path);
       if (PathRemoveFileSpec(tmp)) {
         retval.parent_path = tmp;
       };
@@ -390,7 +406,7 @@ struct DIRDLG {
     if (INVALID_HANDLE_VALUE != hfind) {
       do {
         if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-          if (strcmp(_T("."), wfd.cFileName)) {
+          if (__STRCMP(_T("."), wfd.cFileName)) {
             retval.subdirs.push_back(str{ wfd.cFileName });
           }
         }
@@ -399,6 +415,7 @@ struct DIRDLG {
     } else {
       retval.error = true;
       retval.error_code = GetLastError();
+      MessageBox(0, (str{ _T("ERROR: ") } + __TO_STR(retval.error_code)).c_str(), _T("ERROR"), MB_ICONSTOP);
     }
     return retval;
   }
@@ -435,8 +452,8 @@ struct DIRDLG {
   static std::vector<str> get_drive_letters() {
     std::vector<str> retval{};
     _TCHAR buf[4096]{};
-    GetLogicalDriveStrings(tsizeof(buf) - 1, buf);
-    for (UINT i = 0; i < ((tsizeof(buf) - 1)); i++) {
+    GetLogicalDriveStrings(TSIZEOF(buf) - 1, buf);
+    for (UINT i = 0; i < ((TSIZEOF(buf) - 1)); i++) {
       if (isalpha(buf[i])) {
         retval.push_back(&(buf[i]));
       }
@@ -446,7 +463,7 @@ struct DIRDLG {
 
   static bool go_to_parent(HWND hdlg, str& path) {
     auto bkp = path;
-    auto t1 = _strdup(path.c_str());
+    auto t1 = __STRDUP(path.c_str());
     PathRemoveBackslash(t1);
     PathRemoveFileSpec(t1);
     path = t1;
@@ -525,7 +542,7 @@ struct DIRDLG {
         current_path = path;
       } else {
         _TCHAR tmp[MAX_PATH];
-        GetCurrentDirectory(tsizeof(tmp), tmp);
+        GetCurrentDirectory(TSIZEOF(tmp), tmp);
         current_path = tmp;
       }
       if (!update_dialog(hdlg, current_path.c_str())) {
@@ -573,7 +590,7 @@ struct DIRDLG {
         if (r) {
           auto tmpd = current_path + _T("\\") + _this->new_dir;
           if (!CreateDirectory(tmpd.c_str(), 0)) {
-            MessageBox(hdlg, _T("Error creating directory"), (str{ _T("Error code: ") } + to_str(GetLastError())).c_str(), MB_ICONSTOP);
+            MessageBox(hdlg, _T("Error creating directory"), (str{ _T("Error code: ") } + __TO_STR(GetLastError())).c_str(), MB_ICONSTOP);
           } else if (is_dir(tmpd.c_str())) {
             current_path = tmpd;
             update_dialog(hdlg, current_path.c_str());
@@ -583,7 +600,7 @@ struct DIRDLG {
         return 1;
       } else if ((LOWORD(wparm) == 1002) && (HIWORD(wparm) == BN_CLICKED)) {
         EndDialog(hdlg, DIRDLG::RET_SELECTED);
-        StrNCpy(_this->selected_dir, current_path.c_str(), tsizeof(DIRDLG::selected_dir));
+        StrNCpy(_this->selected_dir, current_path.c_str(), TSIZEOF(DIRDLG::selected_dir));
         return 1;
       } else if (((wparm == 2) && (lparm == 0)) ||
         ((LOWORD(wparm) == 1001) && (HIWORD(wparm) == BN_CLICKED))
@@ -616,14 +633,14 @@ struct DIRDLG {
         if (edit_focus) {
           auto bkp = current_path;
           _TCHAR tbuf[1024];
-          GetWindowText(GetDlgItem(hdlg, 1005), tbuf, tsizeof(tbuf));
+          GetWindowText(GetDlgItem(hdlg, 1005), tbuf, TSIZEOF(tbuf));
           bool ok_dir{ false };
           if (is_dir(tbuf)) {
             current_path = tbuf;
             if (PathIsRelative(current_path.c_str())) {
               _TCHAR tmp1[MAX_PATH];
               _TCHAR* dummy;
-              if (GetFullPathName(current_path.c_str(), tsizeof(tmp1), tmp1, &dummy)) {
+              if (GetFullPathName(current_path.c_str(), TSIZEOF(tmp1), tmp1, &dummy)) {
                 ok_dir = true;
                 current_path = tmp1;
               } else {
@@ -645,13 +662,13 @@ struct DIRDLG {
           _TCHAR namebuf[MAX_PATH];
           if (DlgDirSelectEx(hdlg, namebuf, MAX_PATH,
             1006)) {
-            if (strcmp(_T("..\\"), namebuf) == 0) {
+            if (__STRCMP(_T("..\\"), namebuf) == 0) {
               if (!go_to_parent(hdlg, current_path)) {
                 EndDialog(hdlg, DIRDLG::RET_CANCEL);
               }
               return 1;
             } else {
-              auto new_path = current_path = current_path +
+              auto new_path = current_path +
                 ((current_path[current_path.length() - 1] != _T('\\')) ? _T("\\") : _T("")) +
                 namebuf;
               if (!update_dialog(hdlg, new_path.c_str())) {
@@ -682,7 +699,7 @@ struct DIRDLG {
     _TCHAR tmp1[MAX_PATH]{};
     if (PathIsRelative(_initial_path)) {
       _TCHAR* dummy;
-      GetFullPathName(_initial_path, tsizeof(tmp1), tmp1, &dummy);
+      GetFullPathName(_initial_path, TSIZEOF(tmp1), tmp1, &dummy);
       this->initial_path = tmp1;
     } else {
       this->initial_path = _initial_path;
